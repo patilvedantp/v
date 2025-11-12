@@ -1,0 +1,73 @@
+-- 1. Switch to the correct database
+USE info;
+-- 2. Drop existing tables if they exist (for a clean run)
+DROP TABLE IF EXISTS Library_Audit;
+DROP TABLE IF EXISTS Library;
+-- 3. Create the main table (Matches problem statement)
+CREATE TABLE Library (
+    roll_no INT,
+    name VARCHAR(20),
+    date_of_issue DATE,
+    book_name VARCHAR(20),
+    status VARCHAR(20),
+    author VARCHAR(20)
+);
+-- 4. Create the audit table (Matches problem statement)
+CREATE TABLE Library_Audit (
+    roll_no INT,
+    name VARCHAR(20),
+    date_of_issue DATE,
+    book_name VARCHAR(20),
+    status VARCHAR(20),
+    author VARCHAR(20),
+    change_time TIMESTAMP
+);
+-- 5. Insert the data (Reconstructed from the file)
+INSERT INTO Library VALUES
+('1', 'nick', '2018-06-10', 'wings_of_fire', 'avaliable', 'APJ'),
+('2', 'mira', '2018-05-11', 'leaves_life', 'not_avaliable', 'borwarkar'),
+('3', 'rina', '2018-02-12', 'unusal', 'avaliable', 'johar'),
+('4', 'harsha', '2018-06-20', 'skylimit', 'avaliable', 'ingale'),
+('5', 'tej', '2018-04-20', 'highway', 'not_avaliable', 'klm');
+-- 6. Set the delimiter
+DELIMITER //
+-- 7. Drop triggers if they exist (for a clean run)
+DROP TRIGGER IF EXISTS trg_library_after_update;
+DROP TRIGGER IF EXISTS trg_library_after_delete;
+-- 8. Create the AFTER UPDATE trigger (Saves OLD data)
+CREATE TRIGGER trg_library_after_update
+AFTER UPDATE ON Library
+FOR EACH ROW
+BEGIN
+    INSERT INTO Library_Audit VALUES (
+        OLD.roll_no, OLD.name, OLD.date_of_issue, Old.book_name,
+        OLD.status, OLD.author, CURRENT_TIMESTAMP
+    );
+END;
+//
+-- 9. Create the AFTER DELETE trigger (Saves OLD data)
+CREATE TRIGGER trg_library_after_delete
+AFTER DELETE ON Library
+FOR EACH ROW
+BEGIN
+    INSERT INTO Library_Audit VALUES (
+        OLD.roll_no, OLD.name, OLD.date_of_issue, Old.book_name,
+        OLD.status, OLD.author, CURRENT_TIMESTAMP
+    );
+END;
+//
+-- 10. Reset the delimiter
+DELIMITER ;
+-- 11. Show initial data
+SELECT * FROM Library;
+-- 12. Test the UPDATE trigger
+UPDATE Library
+SET status = 'Damaged'
+WHERE roll_no = 1;
+-- 13. Test the DELETE trigger
+DELETE FROM Library
+WHERE roll_no = 3;
+-- 14. Show the final data in the Library
+SELECT * FROM Library;
+-- 15. Show the audit log (This should now have 2 entries)
+SELECT * FROM Library_Audit;

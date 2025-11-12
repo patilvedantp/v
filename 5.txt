@@ -1,0 +1,82 @@
+-- 1. Tell MySQL to trust your function for this session
+SET log_bin_trust_function_creators = 1;
+-- 2. Switch to the correct database
+USE Abhi;
+-- 3. Drop existing tables if they exist (for a clean run)
+DROP TABLE IF EXISTS result;
+DROP TABLE IF EXISTS marks;
+-- 4. Create the tables (Corrected 'total_marks' to INT)
+CREATE TABLE marks (
+    roll_no INT,
+    name VARCHAR(20),
+    total_marks INT
+);
+CREATE TABLE result (
+    roll_no INT,
+    name VARCHAR(20),
+    class VARCHAR(20)
+);
+-- 5. Insert the data
+INSERT INTO marks VALUES('1', 'Abhi', '1400');
+INSERT INTO marks VALUES('2', 'piyush', '980');
+INSERT INTO marks VALUES('3', 'hitesh', '880');
+INSERT INTO marks VALUES('4', 'ashley', '820');
+INSERT INTO marks VALUES('5', 'partik', '740');
+INSERT INTO marks VALUES('6', 'patil', '640');
+-- 6. Set the delimiter to create procedures/functions
+DELIMITER //
+-- 7. Drop procedure/function if they exist (for a clean run)
+DROP PROCEDURE IF EXISTS proc_result;
+DROP FUNCTION IF EXISTS final_result3;
+-- 8. Create the Stored Procedure (Corrected logic to match problem statement)
+CREATE PROCEDURE proc_result (IN marks INT, OUT class CHAR(20))
+BEGIN
+    IF (marks BETWEEN 990 AND 1500) THEN
+        SET class = 'Distinction';
+    ELSEIF (marks BETWEEN 900 AND 989) THEN
+        SET class = 'First Class';
+    ELSEIF (marks BETWEEN 825 AND 899) THEN
+        SET class = 'Higher Second Class';
+    ELSEIF (marks BETWEEN 750 AND 824) THEN
+        SET class = 'Second Class';
+    ELSEIF (marks BETWEEN 650 AND 749) THEN
+        SET class = 'Passed';
+    ELSEIF (marks < 649) THEN
+        SET class = 'Fail';
+    END IF;
+END;
+//
+-- 9. Create the Stored Function (Corrected to call 'proc_result')
+CREATE FUNCTION final_result3 (R1 INT)
+RETURNS INT
+DETERMINISTIC MODIFIES SQL DATA
+BEGIN
+    DECLARE fmarks INT;
+    DECLARE grade VARCHAR(20);
+    DECLARE stud_name VARCHAR(20);
+
+    -- Get data from marks table
+    SELECT total_marks, name INTO fmarks, stud_name
+    FROM marks
+    WHERE roll_no = R1;
+
+    -- Call the correct procedure
+    CALL proc_result(fmarks, @grade);
+
+    -- Insert into the result table
+    INSERT INTO result VALUES (R1, stud_name, @grade);
+
+    RETURN R1;
+END;
+//
+-- 10. Reset the delimiter back to normal
+DELIMITER ;
+-- 11. Run the function for all the students
+SELECT final_result3(1);
+SELECT final_result3(2);
+SELECT final_result3(3);
+SELECT final_result3(4);
+SELECT final_result3(5);
+SELECT final_result3(6);
+-- 12. View the final populated result table
+SELECT * FROM result;
