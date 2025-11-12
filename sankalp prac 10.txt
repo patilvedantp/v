@@ -1,0 +1,49 @@
+// ================================
+// 1. CREATE DATABASE & COLLECTION
+// ================================
+use Abhi
+db.createCollection('Journal')
+
+// ================================
+// 2. INSERT DOCUMENTS
+// ================================
+db.Journal.insert({'book_id':1,'book_name':'JavaOOP','amt':500,'status':'Available'})
+db.Journal.insert({'book_id':1,'book_name':'JavaOOP','amt':400,'status':'Not Available'})
+db.Journal.insert({'book_id':1,'book_name':'Java','amt':300,'status':'Not Available'})
+db.Journal.insert({'book_id':2,'book_name':'Java','amt':300,'status':'Available'})
+db.Journal.insert({'book_id':2,'book_name':'OOP','amt':200,'status':'Available'})
+db.Journal.insert({'book_id':2,'book_name':'C+','amt':200,'status':'Available'})
+db.Journal.insert({'book_id':3,'book_name':'C+','amt':150,'status':'Available'})
+db.Journal.insert({'book_id':3,'book_name':'C++','amt':200,'status':'Not Available'})
+db.Journal.insert({'book_id':4,'book_name':'OOP C++','amt':300,'status':'Not Available'})
+db.Journal.insert({'book_id':5,'book_name':'OOP C++','amt':400,'status':'Available'})
+db.Journal.insert({'book_id':5,'book_name':'C++','amt':400,'status':'Available'})
+db.Journal.insert({'book_id':5,'book_name':'C++ Java','amt':400,'status':'Not Available'})
+
+// ================================
+// 3. DEFINE MAP AND REDUCE FUNCTIONS
+// ================================
+
+// Map Function: emits book_id and amount
+var mapfunction = function() {
+    emit(this.book_id, this.amt);
+};
+
+// Reduce Function: sums up all the amounts for same book_id
+var reducefunction = function(key, values) {
+    return Array.sum(values);
+};
+
+// ================================
+// 4. EXECUTE MAPREDUCE OPERATION
+// ================================
+db.Journal.mapReduce(
+    mapfunction,
+    reducefunction,
+    { out: 'new' }
+)
+
+// ================================
+// 5. DISPLAY MAPREDUCE OUTPUT
+// ================================
+db.new.find().pretty()
